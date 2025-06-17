@@ -136,6 +136,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Project-specific venv
+.venv_missing_contract_bot/
+
 # Spyder project settings
 .spyderproject
 .spyproject

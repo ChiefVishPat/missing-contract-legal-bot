@@ -6,20 +6,21 @@ A Slack bot that monitors a channel for contract review requests, automatically 
 
 ## Features
 
-- Listens for `@legal-bot please review` mentions with file attachments  
-- Downloads and parses contract files  
-- Generates concise contract summaries via OpenAI's GPT models  
-- Posts summary cards back to Slack  
-- Opens a tracking issue on GitHub with the summary and file link  
+- Listens for `@legal-bot please review` mentions with file attachments
+- Downloads and parses contract files
+- Supports plaintext files (e.g., .txt, .md) as well as PDF and Word documents (.pdf, .docx, .doc).
+- Generates concise contract summaries via OpenAI's GPT models
+- Posts summary cards back to Slack
+- Opens a tracking issue on GitHub with the summary and file link
 
 ---
 
 ## Prerequisites
 
-- Python 3.8+ installed  
-- A Slack workspace where you have permissions to install apps  
-- A GitHub repository to store created issues  
-- OpenAI API access  
+- Python 3.8+ installed
+- A Slack workspace where you have permissions to install apps
+- A GitHub repository to store created issues
+- OpenAI API access
 
 ---
 
@@ -42,12 +43,13 @@ A Slack bot that monitors a channel for contract review requests, automatically 
 3. **Install dependencies**
     ```bash
     pip install -r requirements.txt
-    
+
 4. **Environment Variables**
     Copy `.env.example` to `.env` and fill in the values:
 
     ```dotenv
     SLACK_BOT_TOKEN=your-slack-bot-token
+    SLACK_APP_TOKEN=your-slack-app-token
     SLACK_SIGNING_SECRET=your-slack-signing-secret
     OPENAI_API_KEY=your-openai-api-key
     GITHUB_TOKEN=your-github-personal-access-token

@@ -31,29 +31,32 @@ app = AsyncApp(
 )
 
 
-async def create_github_issue(title: str, body: str) -> dict:
+def get_system_prompt(context: dict) -> str:
     """
-    Create a GitHub issue in the repo specified by GITHUB_REPO.
-    Returns the parsed JSON response.
+    Generate a dynamic system prompt based on provided context.
+    For example, vary instructions by team or contract type.
     """
-    repo: str = os.getenv("GITHUB_REPO", "")
-    token: str = os.getenv("GITHUB_TOKEN", "")
-    url = f"https://api.github.com/repos/{repo}/issues"
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json",
-    }
-    payload = {"title": title, "body": body}
+    team = context.get("team", "").lower()
 
-    async with aiohttp.ClientSession() as session:
-        resp = await session.post(url, json=payload, headers=headers)
-        data = await resp.json()
-        if resp.status != 201:
-            raise RuntimeError(f"GitHub issue creation failed [{resp.status}]: {data}")
-        return data
+    if team == "compliance":
+        return """You are a legal assistant who highlights potential risks
+        and obligations within the contract, emphasizing critical points."""
+    elif team == "product":
+        return """You are a legal assistant who
+        simplifies contracts for product managers."""
+    elif team == "finance":
+        return (
+            """You are a legal assistant focused on financial terms and obligations."""
+        )
+    elif team == "contract":
+        return """You are a highly accurate and professional legal assistant
+        specialized in contract law. Provide clear, concise,
+        and actionable summaries."""
+    else:
+        return """You are a top-notch, reliable, legal assistant."""
 
 
-async def summarize_contract(text: str) -> str:
+async def summarize_contract(text: str, system_prompt: str) -> str:
     """
     Send contract text to OpenAI and return a concise summary.
     """
@@ -64,7 +67,7 @@ async def summarize_contract(text: str) -> str:
         input=[
             {
                 "role": "system",
-                "content": "You are a top-notch, reliable, legal assistant.",
+                "content": system_prompt,
             },
             {"role": "user", "content": f"Summarize the key points:\n\n{text}"},
         ],
@@ -100,6 +103,28 @@ def build_summary_blocks(summary: str) -> list[dict]:
         blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": chunk}})
 
     return blocks
+
+
+async def create_github_issue(title: str, body: str) -> dict:
+    """
+    Create a GitHub issue in the repo specified by GITHUB_REPO.
+    Returns the parsed JSON response.
+    """
+    repo: str = os.getenv("GITHUB_REPO", "")
+    token: str = os.getenv("GITHUB_TOKEN", "")
+    url = f"https://api.github.com/repos/{repo}/issues"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    payload = {"title": title, "body": body}
+
+    async with aiohttp.ClientSession() as session:
+        resp = await session.post(url, json=payload, headers=headers)
+        data = await resp.json()
+        if resp.status != 201:
+            raise RuntimeError(f"GitHub issue creation failed [{resp.status}]: {data}")
+        return data
 
 
 @app.event("app_mention")
@@ -144,9 +169,22 @@ async def handle_review(event, say):
         except RuntimeError as e:
             return await say(f"⚠️ Error processing file: {e}")
 
+    # Example: derive context from Slack message or file name
+    # Here, just a demo: parse team from message text or default
+    team = "default"
+    text = event.get("text", "").lower()
+    if "compliance" in text:
+        team = "compliance"
+    elif "product" in text:
+        team = "product"
+    elif "finance" in text:
+        team = "finance"
+
+    system_prompt = get_system_prompt({"team": team})
+
     # Summarize via OpenAI
     try:
-        summary = await summarize_contract(contract_text)
+        summary = await summarize_contract(contract_text, system_prompt=system_prompt)
     except OpenAIError as e:
         await say(f"❌ OpenAI API error: {e}")
         return

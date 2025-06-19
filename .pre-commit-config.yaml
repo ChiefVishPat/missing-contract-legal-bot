@@ -3,20 +3,26 @@ repos:
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^sample_documents/
       - id: end-of-file-fixer
+        exclude: ^sample_documents/
       - id: check-yaml
+        exclude: ^sample_documents/
       - id: check-added-large-files
+        exclude: ^sample_documents/
 
   - repo: https://github.com/psf/black
     rev: 23.7.0
     hooks:
       - id: black
+        exclude: ^sample_documents/
         language_version: python3
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.0
     hooks:
       - id: isort
+        exclude: ^sample_documents/
         language_version: python3
 
   - repo: https://github.com/pycqa/flake8
@@ -25,4 +31,5 @@ repos:
       - id: flake8
         additional_dependencies: [flake8-bugbear]
         args: [--max-line-length=88, --ignore=E203]
+        exclude: ^sample_documents/
         language_version: python3
